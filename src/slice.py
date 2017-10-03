@@ -42,6 +42,29 @@ def path(ox, oy, length, width, road_width, angle):
                 ys.append(ys[-1])
     return (xs, ys)
 
+def path3D(ox, oy, length, width, height, road_width, road_height, angle, cross):
+    # hs = np.arange(0.5*road_height, height-0.5*road_height, road_height)
+    hs = np.linspace(0.5*road_height, height-0.5*road_height, height/road_height)
+    nlayers = len(hs)
+    if cross:
+        angles = []
+        for i in range(nlayers):
+            if i % 2 == 0:
+                angles.append(90 - angle)
+            else:
+                angles.append(angle)
+    else:
+        angles = [angle]*nlayers
+    xs = []
+    ys = []
+    zs = []
+    for i in range(nlayers):
+        tempxs, tempys = path(ox, oy, length, width, road_width, angles[i])
+        xs.extend(tempxs)
+        ys.extend(tempys)
+        zs.extend([hs[i]]*len(tempxs))
+    return (xs, ys, zs)
+
 def read_gcode(filename, max_layer=np.inf):
     '''read gcode from a file, store them into a road segments list,
     road format [x0, y0, x1, y1, z, layer_no, style] length, deltat, Area, isSupport, style'''
@@ -77,7 +100,8 @@ def read_gcode(filename, max_layer=np.inf):
                         return roads
                 if gxyzef[0] == 1 and (gxyzef[1] != last_gxyzef[1] or gxyzef[2] != last_gxyzef[2]) and gxyzef[3] == last_gxyzef[3] and gxyzef[4] > last_gxyzef[4]:
                     roads.append((last_gxyzef[1], last_gxyzef[2], gxyzef[1], gxyzef[2], gxyzef[3], layer_no, 1))
-    return roads[1:]
+    # return roads[1:]
+    return roads
 
 
 def plot_roads(roads):
@@ -127,17 +151,22 @@ def plot_roads(roads):
 def convertToGcode(points, filename):
     lines = ['G1 E0 Z0']
     npoints = len(points[0])
-    x0, y0 = (0.0, 0.0)
-    xs, ys = points
+    x0, y0, z = (0.0, 0.0, 0.0)
+    xs, ys, zs = points
     distance = 0.0
     for i in range(npoints):
         lst = ['G1']
         x = xs[i]
         y = ys[i]
+        old_z = z
+        z = zs[i]
         lst.append('X' + str(x))
         lst.append('Y' + str(y))
-        distance = distance + abs(x - x0) + abs(y - y0)
-        lst.append('E' + str(distance))
+        if z != old_z:
+            lst.append('Z' + str(z))
+        if i != 0 or z == old_z:
+            distance = distance + abs(x - x0) + abs(y - y0)
+            lst.append('E' + str(distance))
         x0, y0 = (x, y)
         lines.append(' '.join(lst))
     with open(filename, 'w') as outfile:
@@ -149,11 +178,14 @@ if __name__ == '__main__':
     print("Hello World")
     length = 10
     width = 8
+    height = 2
     road_width = 0.5
+    road_height = 0.5
     angle = 0
-    points = path(0, 0, length, width, road_width, angle)
-    # plotPath(points, width, length)
-    # convertToGcode(points, 'angle0.gcode')
-    roads = read_gcode('angle0.gcode', 1)
-    print(roads)
+    # points = path(0, 0, length, width, road_width, angle)
+    points = path3D(0, 0, length, width, height, road_width, road_height, angle, True )
+    convertToGcode(points, 'angle0.gcode')
+    roads = read_gcode('angle0.gcode', 10)
     plot_roads(roads)
+    # points = path3D(0, 0, length, width, height, road_width, road_height, angle, True )
+    # print(points[2])
