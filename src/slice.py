@@ -42,9 +42,9 @@ def path(ox, oy, length, width, road_width, angle):
                 ys.append(ys[-1])
     return (xs, ys)
 
-def path3D(ox, oy, length, width, height, road_width, road_height, angle, cross):
-    # hs = np.arange(0.5*road_height, height-0.5*road_height, road_height)
-    hs = np.linspace(0.5*road_height, height-0.5*road_height, height/road_height)
+def path3D(ox, oy, length, width, height, road_width, layer_height, angle, cross):
+    # hs = np.arange(0.5*layer_height, height-0.5*layer_height, layer_height)
+    hs = np.linspace(0.5*layer_height, height-0.5*layer_height, height/layer_height)
     nlayers = len(hs)
     if cross:
         angles = []
@@ -103,8 +103,49 @@ def read_gcode(filename, max_layer=np.inf):
     # return roads[1:]
     return roads
 
+def plot_roads2D(roads):
+    '''plot roads segments read from Gcode'''
+    n = len(roads)
+    print("Number of roads: " + str(n))
+    road = (0, 0, 0, 0, 0, 0)
+    n = len(roads)
+    xs = []
+    ys = []
+    zs = []
+    k = 0.1
+    segs = -1
+    tmp = []
+    for i in range(n):
+        if i > k*n:
+            print(str(int(100*k)) + "%")
+            k += 0.1
+        old_road = road
+        road = roads[i]
+        if road[0] != old_road[2] or road[1] != old_road[3] or road[4] != old_road[4]:
+            segs += 1
+            if len(xs) >= 1:
+                xs.append(old_road[2])
+                ys.append(old_road[3])
+                zs.append(old_road[4])
+                plot.plot(xs, ys)
+                plt.draw()
+            xs = [road[0]]
+            ys = [road[1]]
+            zs = [road[4]]	
+        else:
+            xs.append(road[0])
+            ys.append(road[1])
+            zs.append(road[4])
+    if len(xs) != 0:
+        xs.append(road[2])
+        ys.append(road[3])
+        zs.append(road[4])
+        plt.plot(xs, ys)
+        plt.draw()
+    print("100%")
+    plt.show()
 
-def plot_roads(roads):
+def plot_roads3D(roads):
     '''plot roads segments read from gecode'''
     n = len(roads)
     print("Number of roads: " + str(n))
@@ -176,16 +217,3 @@ def convertToGcode(points, filename):
 
 if __name__ == '__main__':
     print("Hello World")
-    length = 10
-    width = 8
-    height = 2
-    road_width = 0.5
-    road_height = 0.5
-    angle = 0
-    # points = path(0, 0, length, width, road_width, angle)
-    points = path3D(0, 0, length, width, height, road_width, road_height, angle, True )
-    convertToGcode(points, 'angle0.gcode')
-    roads = read_gcode('angle0.gcode', 10)
-    plot_roads(roads)
-    # points = path3D(0, 0, length, width, height, road_width, road_height, angle, True )
-    # print(points[2])
