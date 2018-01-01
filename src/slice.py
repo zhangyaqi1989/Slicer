@@ -7,15 +7,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-def plot_path(points, width, length):
-    ''' points = [xs, ys] '''
-    xs = np.asarray([0, length, length, 0, 0])
-    ys = np.asarray([0, 0, width, width, 0])
+
+
+
+def plot_path(points, ox, oy, width, length):
+    ''' points = [xs, ys]
+        canvas is (ox, oy) --> (ox + length, oy + width)
+    '''
+    xs = np.asarray([0, length, length, 0, 0]) + ox
+    ys = np.asarray([0, 0, width, width, 0]) + oy
     plt.plot(xs, ys)
     plt.plot(points[0], points[1])
     plt.show()
 
-def path2D(ox, oy, length, width, road_width, angle):
+'''
+def raster_path2D(ox, oy, length, width, road_width, angle):
     """create 2D path of 90 degree or 0 degree raster """
     if angle == 0:
         x1 = 0.5*road_width
@@ -46,8 +52,67 @@ def path2D(ox, oy, length, width, road_width, angle):
             else:
                 ys.append(ys[-1])
     return (xs, ys)
+'''
 
-def path3D(ox, oy, length, width, height, road_width, layer_height, angle, cross):
+def raster_path2D(ox, oy, length, width, road_width, angle, start_loc = 'LL'):
+    """create 2D path of 90 degree or 0 degree raster 
+       start_loc: LL, LR, UR, UL
+    """
+    x_start_func = min
+    y_start_func = min
+    if start_loc in ['LR', 'UR']:
+        x_start_func = max
+    if start_loc in ['UL', 'UR']:
+        y_start_func = max
+
+    xlims = [0.5*road_width, length - 0.5*road_width]
+    ylims = [0.5*road_width, width - 0.5*road_width]
+
+    if angle == 0:
+        x1 = x_start_func(xlims)
+        x2 = length - x1
+        ystart = y_start_func(ylims)
+        yend = width - y_start_func(0, width)
+        if yend > ystart:
+            step = road_width
+        else:
+            step = -road_width
+        temp = np.arange(ystart, yend, step)
+        ys = []
+        for v in temp:
+            ys.extend([v, v])
+        xs = [x1]
+        for i in range(1, len(temp)*2):
+            if ys[i] == ys[i-1]:
+                xs.append(x1 + x2 - xs[-1])
+            else:
+                xs.append(xs[-1])
+    if angle == 90:
+        y1 = y_start_func(ylims)
+        y2 = width - y1
+        xstart = x_start_func(xlims)
+        xend = length - x_start_func(0, length)
+        if xend > xstart:
+            step = road_width
+        else:
+            step = -road_width
+        temp = np.arange(xstart, xend, step)
+        xs = []
+        for v in temp:
+            xs.extend([v, v])
+        ys = [y1]
+        for i in range(1, len(temp)*2):
+            if xs[i] == xs[i-1]:
+                ys.append(y1 + y2 - ys[-1])
+            else:
+                ys.append(ys[-1])
+    # linear transform
+    xs = [x + ox for x in xs]
+    ys = [y + oy for y in ys]
+    return (xs, ys)
+
+
+def raster_path3D(ox, oy, length, width, height, road_width, layer_height, angle, cross, start_loc="LL"):
     hs = np.linspace(0.5*layer_height, height-0.5*layer_height, height/layer_height)
     nlayers = len(hs)
     if cross:
@@ -63,7 +128,7 @@ def path3D(ox, oy, length, width, height, road_width, layer_height, angle, cross
     ys = []
     zs = []
     for i in range(nlayers):
-        tempxs, tempys = path2D(ox, oy, length, width, road_width, angles[i])
+        tempxs, tempys = raster_path2D(ox, oy, length, width, road_width, angles[i], start_loc)
         xs.extend(tempxs)
         ys.extend(tempys)
         zs.extend([hs[i]]*len(tempxs))
@@ -104,7 +169,6 @@ def read_gcode(filename, max_layer=np.inf):
                         return roads
                 if gxyzef[0] == 1 and (gxyzef[1] != last_gxyzef[1] or gxyzef[2] != last_gxyzef[2]) and gxyzef[3] == last_gxyzef[3] and gxyzef[4] > last_gxyzef[4]:
                     roads.append((last_gxyzef[1], last_gxyzef[2], gxyzef[1], gxyzef[2], gxyzef[3], layer_no, 1))
-    # return roads[1:]
     return roads
 
 def plot_roads2D(roads):
@@ -221,5 +285,13 @@ def convert_to_gcode(points, filename):
 
 if __name__ == '__main__':
     print("Hello World")
-    # def path2D(ox, oy, length, width, road_width, angle):
+    ox = 1
+    oy = 2
+    length = 12
+    width = 8
+    road_width = 2
+    angle = 90
+    start_loc = 'LR'
+    points = raster_path2D(ox, oy, length, width, road_width, angle, start_loc)
+    plot_path(points, ox, oy, width, length)
 

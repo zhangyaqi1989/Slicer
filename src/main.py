@@ -13,16 +13,17 @@ if __name__ == "__main__":
 
     # single layer 1D
     '''
-    points = path3D(x0, y0, length, width, layer_height, road_width, layer_height, angle, False)
+    points = raster_path3D(x0, y0, length, width, layer_height, road_width, layer_height, angle, False)
     convert_to_gcode(points, filename)
     roads = read_gcode(filename, 10)
     plot_roads2D(roads)
     '''
 
     # multiple layers 3D
-    num_layers = 4
-    height = num_layers * layer_height #
-    points = path3D(x0, y0, length, width, height, road_width, layer_height, angle, cross)
+    num_layers = 2
+    height = num_layers * layer_height
+    start_loc = "UR"
+    points = raster_path3D(x0, y0, length, width, height, road_width, layer_height, angle, cross, start_loc)
     convert_to_gcode(points, filename)
     roads = read_gcode(filename, 10)
     plot_roads3D(roads)
