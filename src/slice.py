@@ -1,9 +1,13 @@
+"""
+Written by Yaqi Zhang
+
+"""
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-def plotPath(points, width, length):
+def plot_path(points, width, length):
     ''' points = [xs, ys] '''
     xs = np.asarray([0, length, length, 0, 0])
     ys = np.asarray([0, 0, width, width, 0])
@@ -11,7 +15,8 @@ def plotPath(points, width, length):
     plt.plot(points[0], points[1])
     plt.show()
 
-def path(ox, oy, length, width, road_width, angle):
+def path2D(ox, oy, length, width, road_width, angle):
+    """create 2D path of 90 degree or 0 degree raster """
     if angle == 0:
         x1 = 0.5*road_width
         x2 = length - 0.5*road_width
@@ -43,7 +48,6 @@ def path(ox, oy, length, width, road_width, angle):
     return (xs, ys)
 
 def path3D(ox, oy, length, width, height, road_width, layer_height, angle, cross):
-    # hs = np.arange(0.5*layer_height, height-0.5*layer_height, layer_height)
     hs = np.linspace(0.5*layer_height, height-0.5*layer_height, height/layer_height)
     nlayers = len(hs)
     if cross:
@@ -59,7 +63,7 @@ def path3D(ox, oy, length, width, height, road_width, layer_height, angle, cross
     ys = []
     zs = []
     for i in range(nlayers):
-        tempxs, tempys = path(ox, oy, length, width, road_width, angles[i])
+        tempxs, tempys = path2D(ox, oy, length, width, road_width, angles[i])
         xs.extend(tempxs)
         ys.extend(tempys)
         zs.extend([hs[i]]*len(tempxs))
@@ -189,7 +193,7 @@ def plot_roads3D(roads):
     print("100%")
     plt.show()
 
-def convertToGcode(points, filename):
+def convert_to_gcode(points, filename):
     lines = ['G1 E0 Z0']
     npoints = len(points[0])
     x0, y0, z = (0.0, 0.0, 0.0)
@@ -217,3 +221,5 @@ def convertToGcode(points, filename):
 
 if __name__ == '__main__':
     print("Hello World")
+    # def path2D(ox, oy, length, width, road_width, angle):
+

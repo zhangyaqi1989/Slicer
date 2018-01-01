@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # single layer 1D
     '''
     points = path3D(x0, y0, length, width, layer_height, road_width, layer_height, angle, False)
-    convertToGcode(points, filename)
+    convert_to_gcode(points, filename)
     roads = read_gcode(filename, 10)
     plot_roads2D(roads)
     '''
@@ -23,6 +23,6 @@ if __name__ == "__main__":
     num_layers = 4
     height = num_layers * layer_height #
     points = path3D(x0, y0, length, width, height, road_width, layer_height, angle, cross)
-    convertToGcode(points, filename)
+    convert_to_gcode(points, filename)
     roads = read_gcode(filename, 10)
     plot_roads3D(roads)
