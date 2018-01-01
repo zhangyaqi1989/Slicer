@@ -8,16 +8,17 @@ import matplotlib.pyplot as plt
 import math
 
 
-
-
-def plot_path(points, ox, oy, width, length):
+def plot_path(points_lst, ox, oy, length, width, colors, plot_border=True):
     ''' points = [xs, ys]
+        points_lst = [points1, points2, ...]
         canvas is (ox, oy) --> (ox + length, oy + width)
     '''
-    xs = np.asarray([0, length, length, 0, 0]) + ox
-    ys = np.asarray([0, 0, width, width, 0]) + oy
-    plt.plot(xs, ys)
-    plt.plot(points[0], points[1])
+    if plot_border:
+        xs = np.asarray([0, length, length, 0, 0]) + ox
+        ys = np.asarray([0, 0, width, width, 0]) + oy
+        plt.plot(xs, ys, 'k-')
+    for points, color in zip(points_lst, colors):
+        plt.plot(points[0], points[1])
     plt.show()
 
 '''
@@ -293,5 +294,6 @@ if __name__ == '__main__':
     angle = 90
     start_loc = 'LR'
     points = raster_path2D(ox, oy, length, width, road_width, angle, start_loc)
-    plot_path(points, ox, oy, width, length)
-
+    points_lst = [points]
+    colors = ['b-']*len(points_lst)
+    plot_path(points_lst, ox, oy, length, width, colors)
