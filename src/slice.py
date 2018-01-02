@@ -2,6 +2,7 @@
 Written by Yaqi Zhang
 
 """
+
 import math
 import sys
 import numpy as np
@@ -10,16 +11,17 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 def plot_path(points_lst, ox, oy, length, width, colors, plot_border=True):
-    ''' points = (xs, ys)
+    """ points = (xs, ys)
         points_lst = [points1, points2, ...]
         canvas is (ox, oy) --> (ox + length, oy + width)
-    '''
+    """
     if plot_border:
         xs, ys = rectangle_border(ox, oy, length, width)
         plt.plot(xs, ys, 'k-')
     for points, color in zip(points_lst, colors):
         plt.scatter(points[0][0], points[1][0])
         plt.plot(points[0], points[1], color)
+    # plt.show()
 
 
 def rectangle_border(ox, oy, length, width, start_loc="LL"):
@@ -300,7 +302,7 @@ def plot_roads2D(roads):
         plt.scatter(xs[0], ys[0])
         plt.draw()
     print("100%")
-    plt.show()
+    # plt.show()
 
 
 def plot_roads3D(roads):
@@ -348,7 +350,7 @@ def plot_roads3D(roads):
         ax.scatter(xs[0], ys[0], zs[0])
         plt.draw()
     print("100%")
-    plt.show()
+    # plt.show()
 
 
 def convert_to_gcode(points, filename):
@@ -395,6 +397,24 @@ def test_raster_path2D():
     plt.show()
 
 
+def plot_checkerboard2D(checker_lst, ox, oy, length, width, grid_length,\
+        grid_width, colors_lst):
+    """ plot checkboard given checker_lst
+
+    """
+    nrows = width // grid_width
+    ncols = length // grid_length
+    for row in range(nrows):
+        for col in range(ncols):
+            curr_x = ox + col*grid_length
+            curr_y = oy + row*grid_width
+            idx = col + row*ncols
+            checker = checker_lst[idx]
+            colors = colors_lst[idx]
+            plot_path(checker, curr_x, curr_y, grid_length,\
+                    grid_width, colors)
+
+
 def test_contour_path2D():
     ox = 1
     oy = 2
@@ -432,6 +452,7 @@ def test_path2D():
     plot_path(points_lst, ox, oy, length, width, colors)
     plt.show()
 
+
 def test_checkerboard2D():
     ox = 1
     oy = 2
@@ -443,29 +464,33 @@ def test_checkerboard2D():
     length = grid_length*ncols
     width = grid_width*nrows
     road_width = 1
-    angle_lst = [0]*num_checkers
+    # angle_lst = [0]*num_checkers
+    angle_lst = np.random.choice([0, 90], num_checkers, replace=True)
     contour_air_gap = 0
     raster_air_gap = 0
     num_contours = 3
-    raster_start_loc_lst = ['LR']*num_checkers
-    contour_start_locs = ['LL']*num_contours
+    # raster_start_loc_lst = ['LR']*num_checkers
+    # contour_start_locs = ['LL']*num_contours
+    raster_start_loc_lst = rand_start_locs(num_checkers)
     contour_start_locs_lst = []
     for i in range(num_checkers):
-        contour_start_locs_lst.append(contour_start_locs)
+        contour_start_locs_lst.append(rand_start_locs(num_contours))
     checker_lst = checkerboard2D(ox, oy, length, width, road_width,\
             contour_air_gap, raster_air_gap,\
             num_contours, contour_start_locs_lst, raster_start_loc_lst,\
             angle_lst, grid_length, grid_width)
-    for row in range(nrows):
-        for col in range(ncols):
-            curr_x = ox + col*grid_length
-            curr_y = oy + row*grid_width
-            idx = col + row*ncols
-            checker = checker_lst[idx]
-            colors = ['r-']*num_contours + ['b-']
-            plot_path(checker, curr_x, curr_y, grid_length,\
-                    grid_width, colors)
+    colors = ['r-']*num_contours + ['b-']
+    colors_lst = []
+    for i in range(len(checker_lst)):
+        colors_lst.append(colors)
+    plot_checkerboard2D(checker_lst, ox, oy, length, width, grid_length,\
+        grid_width, colors_lst)
     plt.show()
+
+
+def rand_start_locs(n):
+    """ generate start_locs randomly """
+    return np.random.choice(['LL', 'LR', 'UL', 'UR'], n, replace=True)
 
 
 if __name__ == '__main__':

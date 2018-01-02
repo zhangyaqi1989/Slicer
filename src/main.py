@@ -2,8 +2,11 @@
 Written by Yaqi Zhang
 
 """
-import slice
+
 import sys
+import matplotlib.pyplot as plt
+import slice
+
 
 def test_single_layer():
     filename = 'test.gcode'
@@ -25,6 +28,7 @@ def test_single_layer():
     slice.convert_to_gcode(points, filename)
     roads = slice.read_gcode(filename, 10)
     slice.plot_roads2D(roads)
+    plt.show()
 
 
 def test_multiple_layers():
@@ -48,6 +52,7 @@ def test_multiple_layers():
     slice.convert_to_gcode(points, filename)
     roads = slice.read_gcode(filename, 10)
     slice.plot_roads3D(roads)
+    plt.show()
 
 
 if __name__ == "__main__":
