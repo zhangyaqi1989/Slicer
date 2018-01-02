@@ -16,14 +16,15 @@ def test_single_layer():
     layer_height = 0.5
     air_gap = 0.2*road_width
     angle = 0
-    x0 = 0
-    y0 = 0
+    x0 = 1
+    y0 = 2
+    z0 = 10
     cross = True # 0/90 angle
     start_loc = "UR"
 
     # single layer 1D
     cross = False
-    points_lst = slice.raster_path3D(x0, y0, length, width, layer_height,\
+    points_lst = slice.raster_path3D(x0, y0, z0, length, width, layer_height,\
             road_width, layer_height, air_gap, angle, cross, start_loc)
     # print(points_lst)
     slice.convert_to_gcode(points_lst, filename)
@@ -40,15 +41,16 @@ def test_multiple_layers():
     layer_height = 0.5
     air_gap = 0.2*road_width
     angle = 0
-    x0 = 0
-    y0 = 0
+    x0 = 1
+    y0 = 2
+    z0 = 10
     cross = True # 0/90 angle
     start_loc = "UR"
 
     # multiple layers 3D
     num_layers = 2
     height = num_layers * layer_height
-    points_lst = slice.raster_path3D(x0, y0, length, width, height, \
+    points_lst = slice.raster_path3D(x0, y0, z0, length, width, height, \
             road_width, layer_height, air_gap, angle, cross, start_loc)
     # print(points_lst)
     slice.convert_to_gcode(points_lst, filename)
@@ -66,4 +68,3 @@ if __name__ == "__main__":
         test_single_layer()
     elif test_type == 2:
         test_multiple_layers()
-

@@ -82,12 +82,6 @@ def insertZ(checker_lst, z):
             points = (tempxs, tempys, [z]*len(tempxs))
             points_lst.append(points)
 
-            '''
-            print("xs")
-            print(xs)
-            print("ys")
-            print(ys)
-            '''
     # n = len(xs)
     # zs = [z]*n
     # return (xs, ys, zs)
@@ -200,12 +194,14 @@ def raster_path2D(ox, oy, length, width, road_width, air_gap, angle,\
     return [(xs, ys)]
 
 
-def raster_path3D(ox, oy, length, width, height, road_width, layer_height,\
+def raster_path3D(ox, oy, oz, length, width, height, road_width, layer_height,\
         air_gap, angle, cross, start_loc="LL"):
     """ create 3D raster path ...
     """
-    hs = np.linspace(0.5*layer_height, height-0.5*layer_height,\
-            height/layer_height)
+    # hs = np.linspace(0.5*layer_height, height-0.5*layer_height,\
+    #        height/layer_height)
+    hs = np.linspace(oz + 0.5*layer_height, oz + height-0.5*layer_height,\
+             height/layer_height)
     nlayers = len(hs)
     if cross:
         angles = []
