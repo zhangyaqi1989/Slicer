@@ -9,54 +9,62 @@ import math
 
 
 def plot_path(points_lst, ox, oy, length, width, colors, plot_border=True):
-    ''' points = [xs, ys]
+    ''' points = (xs, ys)
         points_lst = [points1, points2, ...]
         canvas is (ox, oy) --> (ox + length, oy + width)
     '''
     if plot_border:
-        xs = np.asarray([0, length, length, 0, 0]) + ox
-        ys = np.asarray([0, 0, width, width, 0]) + oy
+        xs, ys = rectangle_border(ox, oy, length, width)
         plt.plot(xs, ys, 'k-')
     for points, color in zip(points_lst, colors):
-        plt.plot(points[0], points[1])
+        plt.plot(points[0], points[1], color)
     plt.show()
 
-'''
-def raster_path2D(ox, oy, length, width, road_width, angle):
-    """create 2D path of 90 degree or 0 degree raster """
-    if angle == 0:
-        x1 = 0.5*road_width
-        x2 = length - 0.5*road_width
-        ystart = 0.5*road_width
-        temp = np.arange(ystart, width, road_width)
-        ys = []
-        for v in temp:
-            ys.extend([v, v])
-        xs = [x1]
-        for i in range(1, len(temp)*2):
-            if ys[i] == ys[i-1]:
-                xs.append(x1 + x2 - xs[-1])
-            else:
-                xs.append(xs[-1])
-    if angle == 90:
-        y1 = 0.5*road_width
-        y2 = width - 0.5*road_width
-        xstart = 0.5*road_width
-        temp = np.arange(xstart, length, road_width)
-        xs = []
-        for v in temp:
-            xs.extend([v, v])
-        ys = [y1]
-        for i in range(1, len(temp)*2):
-            if xs[i] == xs[i-1]:
-                ys.append(y1 + y2 - ys[-1])
-            else:
-                ys.append(ys[-1])
-    return (xs, ys)
-'''
 
-def raster_path2D(ox, oy, length, width, road_width, angle, start_loc = 'LL'):
-    """create 2D path of 90 degree or 0 degree raster 
+def rectangle_border(ox, oy, length, width, start_loc="LL"):
+    """ return border points of the rectangle defined by (ox, oy) --> 
+        (ox + length, oy + width)
+    """
+    order = ['LL', 'LR', 'UR', 'UL']
+    xs = [0, length, length, 0]
+    ys = [0, 0, width, width]
+    index = order.index(start_loc)
+    xs = xs[index:] + xs[:index]
+    ys = ys[index:] + ys[:index]
+    xs.append(xs[0])
+    ys.append(ys[0])
+    xs = [x + ox for x in xs]
+    ys = [y + oy for y in ys]
+    return (xs, ys)
+
+
+def contour_path2D(ox, oy, length, width, road_width, air_gap, num_contours, start_locs):
+    """create 2D contour path
+        contour = (xs, ys)
+        contour_lst = [contour1, contour2, ...]
+    """
+    contour_lst = []
+    curr_x = ox + 0.5*road_width
+    curr_y = oy + 0.5*road_width
+    curr_length = length - road_width
+    curr_width = width - road_width
+    gap = road_width + air_gap
+    for i in range(num_contours):
+        start_loc = start_locs[i]
+        contour = rectangle_border(curr_x, curr_y, curr_length, curr_width, start_loc)
+        contour_lst.append(contour)
+        # update curr_x, curr_y, curr_length and curr_width
+        curr_x += gap
+        curr_y += gap
+        assert curr_length >= 2*gap
+        assert curr_width >= 2*gap
+        curr_length -= 2*gap
+        curr_width -= 2*gap
+    return contour_lst
+
+
+def raster_path2D(ox, oy, length, width, road_width, air_gap, angle, start_loc = 'LL'):
+    """create 2D path of 90 degree or 0 degree raster
        start_loc: LL, LR, UR, UL
     """
     x_start_func = min
@@ -75,9 +83,9 @@ def raster_path2D(ox, oy, length, width, road_width, angle, start_loc = 'LL'):
         ystart = y_start_func(ylims)
         yend = width - y_start_func(0, width)
         if yend > ystart:
-            step = road_width
+            step = road_width + air_gap
         else:
-            step = -road_width
+            step = -(road_width + air_gap)
         temp = np.arange(ystart, yend, step)
         ys = []
         for v in temp:
@@ -94,9 +102,9 @@ def raster_path2D(ox, oy, length, width, road_width, angle, start_loc = 'LL'):
         xstart = x_start_func(xlims)
         xend = length - x_start_func(0, length)
         if xend > xstart:
-            step = road_width
+            step = road_width + air_gap
         else:
-            step = -road_width
+            step = -(road_width + air_gap)
         temp = np.arange(xstart, xend, step)
         xs = []
         for v in temp:
@@ -113,7 +121,7 @@ def raster_path2D(ox, oy, length, width, road_width, angle, start_loc = 'LL'):
     return (xs, ys)
 
 
-def raster_path3D(ox, oy, length, width, height, road_width, layer_height, angle, cross, start_loc="LL"):
+def raster_path3D(ox, oy, length, width, height, road_width, layer_height, air_gap, angle, cross, start_loc="LL"):
     hs = np.linspace(0.5*layer_height, height-0.5*layer_height, height/layer_height)
     nlayers = len(hs)
     if cross:
@@ -129,7 +137,7 @@ def raster_path3D(ox, oy, length, width, height, road_width, layer_height, angle
     ys = []
     zs = []
     for i in range(nlayers):
-        tempxs, tempys = raster_path2D(ox, oy, length, width, road_width, angles[i], start_loc)
+        tempxs, tempys = raster_path2D(ox, oy, length, width, road_width, air_gap, angles[i], start_loc)
         xs.extend(tempxs)
         ys.extend(tempys)
         zs.extend([hs[i]]*len(tempxs))
@@ -288,12 +296,20 @@ if __name__ == '__main__':
     print("Hello World")
     ox = 1
     oy = 2
-    length = 12
-    width = 8
-    road_width = 2
+    length = 20
+    width = 12
+    road_width = 1
     angle = 90
     start_loc = 'LR'
-    points = raster_path2D(ox, oy, length, width, road_width, angle, start_loc)
+    air_gap = 0 # 0.2*road_width
+
+    #def contour_path2D(ox, oy, length, width, road_width, air_gap, num_contours, start_locs):
+    contour_lst = contour_path2D(ox, oy, length, width, road_width, air_gap, 2, ['LL', 'UR'])
+    colors = ['b-']*len(contour_lst)
+    plot_path(contour_lst, ox, oy, length, width, colors)
+    '''
+    points = raster_path2D(ox, oy, length, width, road_width, air_gap, angle, start_loc)
     points_lst = [points]
     colors = ['b-']*len(points_lst)
     plot_path(points_lst, ox, oy, length, width, colors)
+    '''
