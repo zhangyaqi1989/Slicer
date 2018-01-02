@@ -17,8 +17,8 @@ def plot_path(points_lst, ox, oy, length, width, colors, plot_border=True):
         xs, ys = rectangle_border(ox, oy, length, width)
         plt.plot(xs, ys, 'k-')
     for points, color in zip(points_lst, colors):
+        plt.scatter(points[0][0], points[1][0])
         plt.plot(points[0], points[1], color)
-    plt.show()
 
 
 def rectangle_border(ox, oy, length, width, start_loc="LL"):
@@ -38,8 +38,53 @@ def rectangle_border(ox, oy, length, width, start_loc="LL"):
     return (xs, ys)
 
 
+
+def checkerboard2D(ox, oy, length, width, road_width, contour_air_gap, raster_air_gap,\
+        num_contours, contour_start_locs_lst, raster_start_loc_lst, angle_lst, \
+        grid_length, grid_width):
+    """ create 2D checkerboadr contour + raster path
+        points = (xs, ys)
+        points_lst = [contours1, contours2,..., rasters]
+    """
+    ncols = length // grid_length
+    nrows = width // grid_width
+    checker_lst = []
+    for row in range(nrows):
+        for col in range(ncols):
+            idx = row*ncols + col
+            raster_start_loc = raster_start_loc_lst[idx]
+            angle = angle_lst[idx]
+            contour_start_locs = contour_start_locs_lst[idx]
+            curr_x = ox + grid_length * col
+            curr_y = oy + grid_width * row
+            checker = path2D(curr_x, curr_y, grid_length, grid_width, road_width,\
+                    contour_air_gap, raster_air_gap, num_contours, contour_start_locs,\
+                    raster_start_loc, angle)
+            checker_lst.append(checker)
+    return checker_lst
+
+
+def path2D(ox, oy, length, width, road_width, contour_air_gap, raster_air_gap,\
+        num_contours, contour_start_locs, raster_start_loc, angle):
+    """ create 2D contour + raster path
+        points = (xs, ys)
+        points_lst = [contours1, contours2,..., rasters]
+    """
+    lst = contour_path2D(ox, oy, length, width, road_width, contour_air_gap, \
+            num_contours, contour_start_locs)
+    gap = road_width + contour_air_gap
+    # this update is questionable
+    raster_ox = ox + 0.5*road_width + num_contours*gap
+    raster_oy = oy + 0.5*road_width + num_contours*gap
+    raster_length = length - road_width - num_contours*2*gap
+    raster_width = width - road_width - num_contours*2*gap
+    lst.extend(raster_path2D(raster_ox, raster_oy, raster_length, raster_width,\
+            road_width, raster_air_gap, angle, raster_start_loc))
+    return lst
+
+
 def contour_path2D(ox, oy, length, width, road_width, air_gap, num_contours, start_locs):
-    """create 2D contour path
+    """ create 2D contour path
         contour = (xs, ys)
         contour_lst = [contour1, contour2, ...]
     """
@@ -118,10 +163,12 @@ def raster_path2D(ox, oy, length, width, road_width, air_gap, angle, start_loc =
     # linear transform
     xs = [x + ox for x in xs]
     ys = [y + oy for y in ys]
-    return (xs, ys)
+    return [(xs, ys)]
 
 
 def raster_path3D(ox, oy, length, width, height, road_width, layer_height, air_gap, angle, cross, start_loc="LL"):
+    """ create 3D raster path ...
+    """
     hs = np.linspace(0.5*layer_height, height-0.5*layer_height, height/layer_height)
     nlayers = len(hs)
     if cross:
@@ -137,11 +184,23 @@ def raster_path3D(ox, oy, length, width, height, road_width, layer_height, air_g
     ys = []
     zs = []
     for i in range(nlayers):
-        tempxs, tempys = raster_path2D(ox, oy, length, width, road_width, air_gap, angles[i], start_loc)
+        # tempxs, tempys = raster_path2D(ox, oy, length, width, road_width, air_gap, angles[i], start_loc)
+        temps = raster_path2D(ox, oy, length, width, road_width, air_gap, angles[i], start_loc)
+        tempxs, tempys = temps[0]
         xs.extend(tempxs)
         ys.extend(tempys)
         zs.extend([hs[i]]*len(tempxs))
     return (xs, ys, zs)
+
+
+
+# def path2D(ox, oy, length, width, road_width, contour_air_gap, raster_air_gap, num_contours, contour_start_locs, raster_start_loc, angle):
+def path3D(ox, oy, length, width, road_width, contour_air_gaps, raster_air_gaps,\
+        num_contours_lst, contour_start_locs_lst, raster_start_loc_lst, angles):
+    """ create 3D contour + raster path
+    """
+    pass
+
 
 def read_gcode(filename, max_layer=np.inf):
     '''read gcode from a file, store them into a road segments list,
@@ -179,6 +238,7 @@ def read_gcode(filename, max_layer=np.inf):
                 if gxyzef[0] == 1 and (gxyzef[1] != last_gxyzef[1] or gxyzef[2] != last_gxyzef[2]) and gxyzef[3] == last_gxyzef[3] and gxyzef[4] > last_gxyzef[4]:
                     roads.append((last_gxyzef[1], last_gxyzef[2], gxyzef[1], gxyzef[2], gxyzef[3], layer_no, 1))
     return roads
+
 
 def plot_roads2D(roads):
     '''plot roads segments read from Gcode'''
@@ -221,6 +281,7 @@ def plot_roads2D(roads):
         plt.draw()
     print("100%")
     plt.show()
+
 
 def plot_roads3D(roads):
     '''plot roads segments read from gecode'''
@@ -266,6 +327,7 @@ def plot_roads3D(roads):
     print("100%")
     plt.show()
 
+
 def convert_to_gcode(points, filename):
     lines = ['G1 E0 Z0']
     npoints = len(points[0])
@@ -292,24 +354,94 @@ def convert_to_gcode(points, filename):
             outfile.write(line + '\n')
     outfile.close()
 
-if __name__ == '__main__':
-    print("Hello World")
+
+def test_raster_path2D():
     ox = 1
     oy = 2
-    length = 20
-    width = 12
+    length = 30
+    width = 18
     road_width = 1
-    angle = 90
+    angle = 0
     start_loc = 'LR'
     air_gap = 0 # 0.2*road_width
-
-    #def contour_path2D(ox, oy, length, width, road_width, air_gap, num_contours, start_locs):
-    contour_lst = contour_path2D(ox, oy, length, width, road_width, air_gap, 2, ['LL', 'UR'])
-    colors = ['b-']*len(contour_lst)
-    plot_path(contour_lst, ox, oy, length, width, colors)
-    '''
     points = raster_path2D(ox, oy, length, width, road_width, air_gap, angle, start_loc)
-    points_lst = [points]
+    points_lst = points
     colors = ['b-']*len(points_lst)
     plot_path(points_lst, ox, oy, length, width, colors)
-    '''
+    plt.show()
+
+
+def test_contour_path2D():
+    ox = 1
+    oy = 2
+    length = 30
+    width = 18
+    road_width = 1
+    air_gap = 0 # 0.2*road_width
+    num_contours = 2
+    start_locs = ['LL', 'UR']
+    contour_lst = contour_path2D(ox, oy, length, width, road_width, air_gap, num_contours, start_locs)
+    colors = ['b-']*len(contour_lst)
+    plot_path(contour_lst, ox, oy, length, width, colors)
+    plt.show()
+
+
+def test_path2D():
+    ox = 1
+    oy = 2
+    length = 30
+    width = 18
+    road_width = 1
+    angle = 0
+    start_loc = 'LR'
+    air_gap = 0 # 0.2*road_width
+    contour_air_gap = 0
+    raster_air_gap = 0
+    num_contours = 3
+    raster_start_loc = 'LR'
+    contour_start_locs = ['LL']*num_contours
+    points_lst = path2D(ox, oy, length, width, road_width, contour_air_gap, raster_air_gap, num_contours, contour_start_locs, raster_start_loc, angle)
+    colors = ['r-']*num_contours + ['b-']
+    plot_path(points_lst, ox, oy, length, width, colors)
+    plt.show()
+
+def test_checkerboard2D():
+    ox = 1
+    oy = 2
+    grid_length = 30
+    grid_width = 18
+    nrows = 3
+    ncols = 4
+    num_checkers = nrows*ncols
+    length = grid_length*ncols
+    width = grid_width*nrows
+    road_width = 1
+    angle_lst = [0]*num_checkers
+    contour_air_gap = 0
+    raster_air_gap = 0
+    num_contours = 3
+    raster_start_loc_lst = ['LR']*num_checkers
+    contour_start_locs = ['LL']*num_contours
+    contour_start_locs_lst = []
+    for i in range(num_checkers):
+        contour_start_locs_lst.append(contour_start_locs)
+    checker_lst = checkerboard2D(ox, oy, length, width, road_width, contour_air_gap, raster_air_gap,\
+        num_contours, contour_start_locs_lst, raster_start_loc_lst, angle_lst, \
+        grid_length, grid_width)
+    for row in range(nrows):
+        for col in range(ncols):
+            curr_x = ox + col*grid_length
+            curr_y = oy + row*grid_width
+            idx = col + row*ncols
+            checker = checker_lst[idx]
+            colors = ['r-']*num_contours + ['b-']
+            plot_path(checker, curr_x, curr_y, grid_length, grid_width, colors)
+    plt.show()
+
+
+if __name__ == '__main__':
+    print("Hello World")
+    # test_raster_path2D()
+    # test_contour_path2D()
+    # test_path2D()
+    test_checkerboard2D()
