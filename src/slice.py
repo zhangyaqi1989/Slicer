@@ -282,7 +282,8 @@ def plot_roads2D(roads):
                 xs.append(old_road[2])
                 ys.append(old_road[3])
                 zs.append(old_road[4])
-                plot.plot(xs, ys)
+                plt.plot(xs, ys)
+                plt.scatter(xs[0], ys[0])
                 plt.draw()
             xs = [road[0]]
             ys = [road[1]]
@@ -296,6 +297,7 @@ def plot_roads2D(roads):
         ys.append(road[3])
         zs.append(road[4])
         plt.plot(xs, ys)
+        plt.scatter(xs[0], ys[0])
         plt.draw()
     print("100%")
     plt.show()
@@ -329,6 +331,7 @@ def plot_roads3D(roads):
                 ys.append(old_road[3])
                 zs.append(old_road[4])
                 ax.plot(xs, ys, zs)
+                ax.scatter(xs[0], ys[0], zs[0])
                 plt.draw()
             xs = [road[0]]
             ys = [road[1]]
@@ -342,6 +345,7 @@ def plot_roads3D(roads):
         ys.append(road[3])
         zs.append(road[4])
         ax.plot(xs, ys, zs)
+        ax.scatter(xs[0], ys[0], zs[0])
         plt.draw()
     print("100%")
     plt.show()
