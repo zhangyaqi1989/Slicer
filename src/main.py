@@ -1,4 +1,9 @@
+"""
+Written by Yaqi Zhang
+
+"""
 import slice
+import sys
 
 def test_single_layer():
     filename = 'test.gcode'
@@ -46,6 +51,12 @@ def test_multiple_layers():
 
 
 if __name__ == "__main__":
-    # test_single_layer()
-    test_multiple_layers()
+    if len(sys.argv) != 2:
+        print("usage: >> python main.py <test_type>")
+        exit(1)
+    test_type = int(sys.argv[1])
+    if test_type == 1:
+        test_single_layer()
+    elif test_type == 2:
+        test_multiple_layers()
 
