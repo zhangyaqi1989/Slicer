@@ -45,8 +45,8 @@ def checkerboard2D(ox, oy, length, width, road_width, contour_air_gap, \
         raster_air_gap, num_contours, contour_start_locs_lst, \
         raster_start_loc_lst, angle_lst, grid_length, grid_width):
     """ create 2D checkerboadr contour + raster path
-        points = (xs, ys)
-        points_lst = [contours1, contours2,..., rasters]
+        contours/rasters = (xs, ys)
+        checker = [contours1, contours2,..., rasters]
     """
     ncols = length // grid_length
     nrows = width // grid_width
@@ -65,6 +65,33 @@ def checkerboard2D(ox, oy, length, width, road_width, contour_air_gap, \
                     angle)
             checker_lst.append(checker)
     return checker_lst
+
+
+def insertZ(checker_lst, z):
+    """ insert z value to checker_lst
+        return (xs, ys, zs)
+    """
+    # xs = []
+    # ys = []
+    points_lst = []
+    for checker in checker_lst:
+        for points in checker:
+            tempxs, tempys = points
+            # xs.extend(tempxs)
+            # ys.extend(tempys)
+            points = (tempxs, tempys, [z]*len(tempxs))
+            points_lst.append(points)
+
+            '''
+            print("xs")
+            print(xs)
+            print("ys")
+            print(ys)
+            '''
+    # n = len(xs)
+    # zs = [z]*n
+    # return (xs, ys, zs)
+    return points_lst
 
 
 def path2D(ox, oy, length, width, road_width, contour_air_gap, \
@@ -189,19 +216,22 @@ def raster_path3D(ox, oy, length, width, height, road_width, layer_height,\
                 angles.append(angle)
     else:
         angles = [angle]*nlayers
-    xs = []
-    ys = []
-    zs = []
+    # xs = []
+    # ys = []
+    # zs = []
+    points_lst = []
     for i in range(nlayers):
         # tempxs, tempys = raster_path2D(ox, oy, length, width, road_width,\
         # air_gap, angles[i], start_loc)
         temps = raster_path2D(ox, oy, length, width, road_width, air_gap,\
                 angles[i], start_loc)
         tempxs, tempys = temps[0]
-        xs.extend(tempxs)
-        ys.extend(tempys)
-        zs.extend([hs[i]]*len(tempxs))
-    return (xs, ys, zs)
+        # xs.extend(tempxs)
+        # ys.extend(tempys)
+        # zs.extend([hs[i]]*len(tempxs))
+        points_lst.append((tempxs, tempys, [hs[i]]*len(tempxs)))
+    # return (xs, ys, zs)
+    return points_lst
 
 
 
@@ -353,7 +383,41 @@ def plot_roads3D(roads):
     # plt.show()
 
 
+def convert_to_gcode(points_lst, filename):
+    """ points_lst = [subpath1, subpath2 ... ]
+    """
+    lines = ['G1 E0 Z0'] # 'G1 E0 Z0' is the first line
+    distance = 0.0
+
+    x, y, z = (0.0, 0.0, 0.0)
+    for points in points_lst:
+        xs, ys, zs = points
+        npoints = len(xs)
+        for i in range(npoints):
+            lst = ['G1']
+            x = xs[i]
+            y = ys[i]
+            old_z = z
+            z = zs[i]
+            lst.append('X' + str(x))
+            lst.append('Y' + str(y))
+            if z != old_z:
+                lst.append('Z' + str(z))
+            if i != 0 or z == old_z:
+                distance = distance + abs(x - x0) + abs(y - y0)
+                lst.append('E' + str(distance))
+            x0, y0 = (x, y)
+            lines.append(' '.join(lst))
+
+    with open(filename, 'w') as outfile:
+        for line in lines:
+            outfile.write(line + '\n')
+    outfile.close()
+
+'''
 def convert_to_gcode(points, filename):
+    """ only work for one road, or multiple roads on different layers
+    """
     lines = ['G1 E0 Z0']
     npoints = len(points[0])
     x0, y0, z = (0.0, 0.0, 0.0)
@@ -378,6 +442,7 @@ def convert_to_gcode(points, filename):
         for line in lines:
             outfile.write(line + '\n')
     outfile.close()
+'''
 
 
 def test_raster_path2D():
@@ -458,8 +523,8 @@ def test_checkerboard2D():
     oy = 2
     grid_length = 30
     grid_width = 18
-    nrows = 3
-    ncols = 4
+    nrows = 1
+    ncols = 1
     num_checkers = nrows*ncols
     length = grid_length*ncols
     width = grid_width*nrows
@@ -483,8 +548,18 @@ def test_checkerboard2D():
     colors_lst = []
     for i in range(len(checker_lst)):
         colors_lst.append(colors)
+    '''
     plot_checkerboard2D(checker_lst, ox, oy, length, width, grid_length,\
         grid_width, colors_lst)
+    '''
+    # for test
+    filename = 'test.gcode'
+    points = insertZ(checker_lst, 2)
+    print(points)
+    convert_to_gcode(points, filename)
+    roads = read_gcode(filename, 10)
+    plot_roads3D(roads)
+
     plt.show()
 
 

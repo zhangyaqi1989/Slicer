@@ -23,9 +23,10 @@ def test_single_layer():
 
     # single layer 1D
     cross = False
-    points = slice.raster_path3D(x0, y0, length, width, layer_height,\
+    points_lst = slice.raster_path3D(x0, y0, length, width, layer_height,\
             road_width, layer_height, air_gap, angle, cross, start_loc)
-    slice.convert_to_gcode(points, filename)
+    # print(points_lst)
+    slice.convert_to_gcode(points_lst, filename)
     roads = slice.read_gcode(filename, 10)
     slice.plot_roads2D(roads)
     plt.show()
@@ -47,9 +48,10 @@ def test_multiple_layers():
     # multiple layers 3D
     num_layers = 2
     height = num_layers * layer_height
-    points = slice.raster_path3D(x0, y0, length, width, height, \
+    points_lst = slice.raster_path3D(x0, y0, length, width, height, \
             road_width, layer_height, air_gap, angle, cross, start_loc)
-    slice.convert_to_gcode(points, filename)
+    # print(points_lst)
+    slice.convert_to_gcode(points_lst, filename)
     roads = slice.read_gcode(filename, 10)
     slice.plot_roads3D(roads)
     plt.show()
