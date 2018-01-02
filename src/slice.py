@@ -518,48 +518,84 @@ def test_path2D():
     plt.show()
 
 
-def test_checkerboard2D():
-    ox = 1
-    oy = 2
-    grid_length = 30
-    grid_width = 18
-    nrows = 1
-    ncols = 1
+def create_checkerboard2D(ox, oy, grid_length, grid_width, nrows, ncols, \
+        num_contours, road_width, contour_air_gap, raster_air_gap):
     num_checkers = nrows*ncols
     length = grid_length*ncols
     width = grid_width*nrows
-    road_width = 1
-    # angle_lst = [0]*num_checkers
-    angle_lst = np.random.choice([0, 90], num_checkers, replace=True)
-    contour_air_gap = 0
-    raster_air_gap = 0
-    num_contours = 3
+    # # fixed value
     # raster_start_loc_lst = ['LR']*num_checkers
     # contour_start_locs = ['LL']*num_contours
+    # angle_lst = [0]*num_checkers
+    # # random pick
     raster_start_loc_lst = rand_start_locs(num_checkers)
     contour_start_locs_lst = []
+    angle_lst = np.random.choice([0, 90], num_checkers, replace=True)
     for i in range(num_checkers):
         contour_start_locs_lst.append(rand_start_locs(num_contours))
     checker_lst = checkerboard2D(ox, oy, length, width, road_width,\
             contour_air_gap, raster_air_gap,\
             num_contours, contour_start_locs_lst, raster_start_loc_lst,\
             angle_lst, grid_length, grid_width)
+    return checker_lst
+
+
+def test_checkerboard2D():
+    ox = 1
+    oy = 2
+    grid_length = 30
+    grid_width = 18
+    nrows = 3
+    ncols = 4
+    road_width = 1
+    contour_air_gap = 0
+    raster_air_gap = 0
+    num_contours = 3
+    length = ncols*grid_length
+    width = nrows*grid_width
+    checker_lst = create_checkerboard2D(ox, oy, grid_length, grid_width,\
+            nrows, ncols, num_contours, road_width, contour_air_gap,\
+            raster_air_gap)
+
     colors = ['r-']*num_contours + ['b-']
     colors_lst = []
     for i in range(len(checker_lst)):
         colors_lst.append(colors)
-    '''
     plot_checkerboard2D(checker_lst, ox, oy, length, width, grid_length,\
         grid_width, colors_lst)
-    '''
     # for test
+    '''
     filename = 'test.gcode'
-    points = insertZ(checker_lst, 2)
-    print(points)
-    convert_to_gcode(points, filename)
+    points_lst = insertZ(checker_lst, 2)
+    convert_to_gcode(points_lst, filename)
     roads = read_gcode(filename, 10)
     plot_roads3D(roads)
+    '''
+    plt.show()
 
+
+def test_checkerboard3D():
+    ox = 1
+    oy = 2
+    grid_length = 30
+    grid_width = 18
+    nrows = 3
+    ncols = 4
+    road_width = 1
+    contour_air_gap = 0
+    raster_air_gap = 0
+    num_contours = 3
+    length = ncols*grid_length
+    width = nrows*grid_width
+    checker_lst = create_checkerboard2D(ox, oy, grid_length, grid_width,\
+            nrows, ncols, num_contours, road_width, contour_air_gap,\
+            raster_air_gap)
+
+    filename = 'test.gcode'
+    points_lst = insertZ(checker_lst, 2)
+    convert_to_gcode(points_lst, filename)
+    roads = read_gcode(filename, 10)
+    plot_roads3D(roads)
     plt.show()
 
 
@@ -581,5 +617,7 @@ if __name__ == '__main__':
         test_path2D()
     elif test_type == 4:
         test_checkerboard2D()
+    elif test_type == 5:
+        test_checkerboard3D()
     else:
         print("unknown test type!")
