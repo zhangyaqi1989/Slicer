@@ -48,8 +48,8 @@ def checkerboard2D(ox, oy, length, width, road_width, contour_air_gap, \
         contours/rasters = (xs, ys)
         checker = [contours1, contours2,..., rasters]
     """
-    ncols = length // grid_length
-    nrows = width // grid_width
+    ncols = int(length // grid_length)
+    nrows = int(width // grid_width)
     checker_lst = []
     for row in range(nrows):
         for col in range(ncols):
@@ -65,6 +65,33 @@ def checkerboard2D(ox, oy, length, width, road_width, contour_air_gap, \
                     angle)
             checker_lst.append(checker)
     return checker_lst
+
+
+def checkerboard3D(ox, oy, oz, length, width, height, road_width,\
+        layer_height, contour_air_gap_lst, raster_air_gap_lst, num_contours_lst,\
+        contour_start_locs_lsts, raster_start_loc_lsts, angle_lsts, grid_length,\
+        grid_width):
+    """ create checkerboard3D checker_lst
+    """
+    num_layers = int(height // layer_height)
+    hs = np.linspace(oz + 0.5*layer_height, oz + 0.5*layer_height + \
+            (num_layers - 1)*layer_height, num_layers)
+    points_lst = []
+    for i in range(num_layers):
+        z = hs[i]
+        contour_start_locs_lst = contour_start_locs_lsts[i]
+        raster_start_loc_lst = raster_start_loc_lsts[i]
+        angle_lst = angle_lsts[i]
+        contour_air_gap = contour_air_gap_lst[i]
+        raster_air_gap = raster_air_gap_lst[i]
+        num_contours = num_contours_lst[i]
+        temp_checker_lst = checkerboard2D(ox, oy, length, width, \
+                road_width, contour_air_gap, raster_air_gap, \
+                num_contours, contour_start_locs_lst,\
+        raster_start_loc_lst, angle_lst, grid_length, grid_width)
+        temp_points_lst = insertZ(temp_checker_lst, z)
+        points_lst.extend(temp_points_lst)
+    return points_lst
 
 
 def insertZ(checker_lst, z):
@@ -200,23 +227,26 @@ def raster_path3D(ox, oy, oz, length, width, height, road_width, layer_height,\
     """
     # hs = np.linspace(0.5*layer_height, height-0.5*layer_height,\
     #        height/layer_height)
-    hs = np.linspace(oz + 0.5*layer_height, oz + height-0.5*layer_height,\
-             height/layer_height)
-    nlayers = len(hs)
+    # hs = np.linspace(oz + 0.5*layer_height, oz + height-0.5*layer_height,\
+    #         height/layer_height)
+    # nlayers = len(hs)
+    num_layers = int(height // layer_height)
+    hs = np.linspace(oz + 0.5*layer_height, oz + 0.5*layer_height + \
+            (num_layers)*layer_height, num_layers)
     if cross:
         angles = []
-        for i in range(nlayers):
+        for i in range(num_layers):
             if i % 2 == 0:
                 angles.append(90 - angle)
             else:
                 angles.append(angle)
     else:
-        angles = [angle]*nlayers
+        angles = [angle]*num_layers
     # xs = []
     # ys = []
     # zs = []
     points_lst = []
-    for i in range(nlayers):
+    for i in range(num_layers):
         # tempxs, tempys = raster_path2D(ox, oy, length, width, road_width,\
         # air_gap, angles[i], start_loc)
         temps = raster_path2D(ox, oy, length, width, road_width, air_gap,\
@@ -459,7 +489,7 @@ def test_raster_path2D():
 
 
 def plot_checkerboard2D(checker_lst, ox, oy, length, width, grid_length,\
-        grid_width, colors_lst):
+        grid_width, colors_lst, checker_plot_lst):
     """ plot checkboard given checker_lst
 
     """
@@ -470,6 +500,8 @@ def plot_checkerboard2D(checker_lst, ox, oy, length, width, grid_length,\
             curr_x = ox + col*grid_length
             curr_y = oy + row*grid_width
             idx = col + row*ncols
+            if not checker_plot_lst[idx]:
+                continue
             checker = checker_lst[idx]
             colors = colors_lst[idx]
             plot_path(checker, curr_x, curr_y, grid_length,\
@@ -557,8 +589,10 @@ def test_checkerboard2D():
     colors_lst = []
     for i in range(len(checker_lst)):
         colors_lst.append(colors)
+    checker_plot_lst = [True]*len(checker_lst)
+    # checker_plot_lst = np.random.choice([True, False], len(checker_lst))
     plot_checkerboard2D(checker_lst, ox, oy, length, width, grid_length,\
-        grid_width, colors_lst)
+        grid_width, colors_lst, checker_plot_lst)
     # for test
     '''
     filename = 'test.gcode'
@@ -595,6 +629,56 @@ def test_checkerboard3D():
     plt.show()
 
 
+def test_checkerboard3D_multlayers():
+    ox = 1
+    oy = 2
+    oz = 10
+    grid_length = 30
+    grid_width = 20
+    nrows = 3
+    ncols = 4
+    road_width = 1
+    layer_height = 2
+    height = 4
+    num_layers = int(height/layer_height)
+    num_checkers = nrows*ncols
+    num_contours = 3
+    contour_air_gap_lst = [0]*num_layers
+    raster_air_gap_lst = [0]*num_layers
+    num_contours_lst = [3]*num_layers
+    length = ncols*grid_length
+    width = nrows*grid_width
+    raster_start_loc_lsts = []
+    for i in range(num_layers):
+        raster_start_loc_lst = rand_start_locs(num_checkers)
+        raster_start_loc_lsts.append(raster_start_loc_lst)
+    contour_start_locs_lsts = []
+    for i in range(num_layers):
+        contour_start_locs_lst = []
+        for i in range(num_checkers):
+            contour_start_locs_lst.append(rand_start_locs(num_contours))
+        contour_start_locs_lsts.append(contour_start_locs_lst)
+    angle_lsts = []
+    for i in range(num_layers):
+        angle_lst = np.random.choice([0, 90], num_checkers, replace=True)
+        angle_lsts.append(angle_lst)
+    points_lst = checkerboard3D(ox, oy, oz, length, width, height, road_width,\
+            layer_height, contour_air_gap_lst, raster_air_gap_lst, num_contours_lst,\
+            contour_start_locs_lsts, raster_start_loc_lsts, angle_lsts, grid_length,\
+            grid_width)
+    points_lst = checkerboard3D(ox, oy, oz, length, width, height, road_width,\
+        layer_height, contour_air_gap_lst, raster_air_gap_lst, num_contours_lst,\
+        contour_start_locs_lsts, raster_start_loc_lsts, angle_lsts, grid_length,\
+        grid_width)
+
+    filename = 'test.gcode'
+    convert_to_gcode(points_lst, filename)
+    roads = read_gcode(filename, 10)
+    plot_roads3D(roads)
+    plt.show()
+
+
+
 def rand_start_locs(n):
     """ generate start_locs randomly """
     return np.random.choice(['LL', 'LR', 'UL', 'UR'], n, replace=True)
@@ -615,5 +699,7 @@ if __name__ == '__main__':
         test_checkerboard2D()
     elif test_type == 5:
         test_checkerboard3D()
+    elif test_type == 6:
+        test_checkerboard3D_multlayers()
     else:
         print("unknown test type!")
