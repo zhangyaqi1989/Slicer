@@ -389,7 +389,7 @@ def convert_to_gcode(points_lst, filename):
     lines = ['G1 E0 Z0'] # 'G1 E0 Z0' is the first line
     distance = 0.0
 
-    x, y, z = (0.0, 0.0, 0.0)
+    x, y, z = (float('Inf'), float('Inf'), float('Inf'))
     for points in points_lst:
         xs, ys, zs = points
         npoints = len(xs)
@@ -403,7 +403,7 @@ def convert_to_gcode(points_lst, filename):
             lst.append('Y' + str(y))
             if z != old_z:
                 lst.append('Z' + str(z))
-            if i != 0 or z == old_z:
+            if i != 0: # i == 0 means travel nozzle
                 distance = distance + abs(x - x0) + abs(y - y0)
                 lst.append('E' + str(distance))
             x0, y0 = (x, y)
