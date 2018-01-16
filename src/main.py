@@ -68,3 +68,10 @@ if __name__ == "__main__":
         test_single_layer()
     elif test_type == 2:
         test_multiple_layers()
+
+    '''
+    filename = 'A3_Square.gcode'
+    roads = slice.read_gcode(filename, 10)
+    slice.plot_roads3D(roads)
+    plt.show()
+    '''

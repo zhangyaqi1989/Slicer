@@ -678,10 +678,90 @@ def test_checkerboard3D_multlayers():
     plt.show()
 
 
-
 def rand_start_locs(n):
     """ generate start_locs randomly """
     return np.random.choice(['LL', 'LR', 'UL', 'UR'], n, replace=True)
+
+
+def _compute_y(x0, y0, theta, x1):
+    L = (x1 - x0)/np.cos(theta)
+    return y0 + L*np.sin(theta)
+
+def _compute_x(x0, y0, theta, y1):
+    L = (y1 - y0)/np.sin(theta)
+    return x0 + L*np.cos(theta)
+
+
+def _line(x0, y0, theta, length, width, road_width, ox, oy):
+    """ return the intersect points between line
+        defined by (x0, y0) and theta and the inner rectangle
+    """
+    length -= road_width
+    width -= road_width
+    dx = ox + 0.5*road_width
+    dy = oy + 0.5*road_width
+    # left end
+    left_x = 0.0
+    left_y = _compute_y(x0, y0, theta, left_x)
+    if left_y < 0.0 or left_y > width:
+        left_y = 0
+        left_x = _compute_x(x0, y0, theta, left_y)
+    # right end
+    right_x = length
+    right_y = _compute_y(x0, y0, theta, right_x)
+    if right_y < 0.0 or right_y > width:
+        right_y = width
+        right_x = _compute_x(x0, y0, theta, right_y)
+    return ((left_x + dx, right_x + dx), (left_y + dy, right_y + dy))
+
+
+def _connect_through_border(x0, y0, x1, y1):
+    if x0 == x1 or y1 == y0:
+        return ([x0, x1], [y0, y1])
+    else:
+        return([x0, y1, x1], [y0, x1, y1])
+
+
+def test():
+    ox = 1
+    oy = 2
+    length = 20
+    width = 14
+    road_width = 1
+    xs, ys = rectangle_border(ox, oy, length, width)
+    plt.plot(xs, ys, 'k-')
+    xs, ys = rectangle_border(ox+0.5*road_width, oy+0.5*road_width, \
+            length-road_width, width-road_width)
+    plt.plot(xs, ys, 'r--')
+    # calculate parallel lines
+    # UL: (0, width)
+    gap = 2
+    theta = np.pi/4.0
+    # theta = np.pi/6.0
+    delt_x = gap/np.sin(theta)
+    x = 0.5*road_width
+    points_xs = []
+    points_ys = []
+    end = 0
+    while x < length - road_width + (width-road_width)/np.tan(theta):
+        lines = _line(x, width-road_width, theta, length, width, road_width, ox, oy)
+        (x0, x1), (y0, y1) = lines
+        if end == 0:
+            points_xs.extend([x0, x1])
+            points_ys.extend([y0, y1])
+        else:
+            points_xs.extend([x1, x0])
+            points_ys.extend([y1, y0])
+        end = 1 - end
+        # plt.plot(lines[0], lines[1])
+        # plt.scatter(lines[0], lines[1])
+        x += delt_x
+    plt.plot(points_xs, points_ys)
+    print(points_xs)
+    print(points_ys)
+
+    plt.axis('equal')
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -701,5 +781,7 @@ if __name__ == '__main__':
         test_checkerboard3D()
     elif test_type == 6:
         test_checkerboard3D_multlayers()
+    elif test_type == 7:
+        test()
     else:
         print("unknown test type!")
