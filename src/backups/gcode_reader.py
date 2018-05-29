@@ -1,6 +1,6 @@
 import sys
 import matplotlib.pyplot as plt
-import slice
+import slicer
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -8,7 +8,7 @@ if __name__ == "__main__":
         exit(1)
     filename = sys.argv[1]
     max_layer_num = int(sys.argv[2])
-    roads = slice.read_gcode(filename, max_layer_num)
-    slice.plot_roads3D(roads)
+    roads = slicer.read_gcode(filename, max_layer_num)
+    slicer.plot_roads3D(roads)
     plt.axis('equal')
     plt.show()

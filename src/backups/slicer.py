@@ -1,10 +1,18 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+##################################
+# University of Wisconsin-Madison
+# Author: Yaqi Zhang
+##################################
 """
-Written by Yaqi Zhang
-
+This module contains some basic slicer functions
 """
 
+# standard library
 import math
 import sys
+
+# 3rd party library
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -439,36 +447,6 @@ def convert_to_gcode(points_lst, filename):
         for line in lines:
             outfile.write(line + '\n')
     outfile.close()
-
-'''
-def convert_to_gcode(points, filename):
-    """ only work for one road, or multiple roads on different layers
-    """
-    lines = ['G1 E0 Z0']
-    npoints = len(points[0])
-    x0, y0, z = (0.0, 0.0, 0.0)
-    xs, ys, zs = points
-    distance = 0.0
-    for i in range(npoints):
-        lst = ['G1']
-        x = xs[i]
-        y = ys[i]
-        old_z = z
-        z = zs[i]
-        lst.append('X' + str(x))
-        lst.append('Y' + str(y))
-        if z != old_z:
-            lst.append('Z' + str(z))
-        if i != 0 or z == old_z:
-            distance = distance + abs(x - x0) + abs(y - y0)
-            lst.append('E' + str(distance))
-        x0, y0 = (x, y)
-        lines.append(' '.join(lst))
-    with open(filename, 'w') as outfile:
-        for line in lines:
-            outfile.write(line + '\n')
-    outfile.close()
-'''
 
 
 def test_raster_path2D():

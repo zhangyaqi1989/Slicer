@@ -5,7 +5,7 @@ Written by Yaqi Zhang
 
 import sys
 import matplotlib.pyplot as plt
-import slice
+import slicer
 
 
 def test_single_layer():
@@ -24,12 +24,12 @@ def test_single_layer():
 
     # single layer 1D
     cross = False
-    points_lst = slice.raster_path3D(x0, y0, z0, length, width, layer_height,\
+    points_lst = slicer.raster_path3D(x0, y0, z0, length, width, layer_height,\
             road_width, layer_height, air_gap, angle, cross, start_loc)
     # print(points_lst)
-    slice.convert_to_gcode(points_lst, filename)
-    roads = slice.read_gcode(filename, 10)
-    slice.plot_roads2D(roads)
+    slicer.convert_to_gcode(points_lst, filename)
+    roads = slicer.read_gcode(filename, 10)
+    slicer.plot_roads2D(roads)
     plt.show()
 
 
@@ -50,12 +50,12 @@ def test_multiple_layers():
     # multiple layers 3D
     num_layers = 2
     height = num_layers * layer_height
-    points_lst = slice.raster_path3D(x0, y0, z0, length, width, height, \
+    points_lst = slicer.raster_path3D(x0, y0, z0, length, width, height, \
             road_width, layer_height, air_gap, angle, cross, start_loc)
     # print(points_lst)
-    slice.convert_to_gcode(points_lst, filename)
-    roads = slice.read_gcode(filename, 10)
-    slice.plot_roads3D(roads)
+    slicer.convert_to_gcode(points_lst, filename)
+    roads = slicer.read_gcode(filename, 10)
+    slicer.plot_roads3D(roads)
     plt.show()
 
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     '''
     filename = 'A3_Square.gcode'
-    roads = slice.read_gcode(filename, 10)
-    slice.plot_roads3D(roads)
+    roads = slicer.read_gcode(filename, 10)
+    slicer.plot_roads3D(roads)
     plt.show()
     '''
