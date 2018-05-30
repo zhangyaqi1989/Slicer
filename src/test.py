@@ -19,10 +19,11 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # local library
 from slicer import (compute_raster_path2D, compute_contour_path2D,
-                    compute_path2D, compute_checkerboard2D,
+                    compute_path2D, compute_checkerboard2D, _insertZ
                     )
 
-from draw import plot_path, plot_checkerboard2D
+from draw import plot_path, plot_checkerboard2D, plot_gcode_roads3D
+from gcode_rw import write_gcode, read_gcode
 
 
 def test_compute_raster_path2D():
@@ -62,6 +63,7 @@ def test_compute_contour_path2D():
 
 
 def test_compute_path2D():
+    """Test compute_path2D()"""
     ox = 1
     oy = 2
     length = 30
@@ -84,6 +86,7 @@ def test_compute_path2D():
 
 
 def test_compute_checkerboard2D():
+    """Test compute_checkerboard2D()"""
     ox = 1
     oy = 2
     grid_length = 30
@@ -111,6 +114,30 @@ def test_compute_checkerboard2D():
     plt.show()
 
 
+def test_checkerboard3D():
+    ox = 1
+    oy = 2
+    grid_length = 30
+    grid_width = 18
+    nrows = 3
+    ncols = 4
+    road_width = 1
+    contour_air_gap = 0
+    raster_air_gap = 0
+    num_contours = 3
+    length = ncols * grid_length
+    width = nrows * grid_width
+    checker_lst = compute_checkerboard2D(ox, oy, grid_length, grid_width,
+                                         nrows, ncols, num_contours, road_width, contour_air_gap,
+                                         raster_air_gap)
+    filename = 'test.gcode'
+    points_lst = _insertZ(checker_lst, 2)
+    write_gcode(points_lst, filename)
+    roads = read_gcode(filename, 10)
+    plot_gcode_roads3D(roads)
+    plt.show()
+
+
 def main():
     """command line runner"""
     # funcs_names = [item for item in dir() if item.startswith('test_')]
@@ -118,11 +145,15 @@ def main():
                    'test_compute_contour_path2D',
                    'test_compute_path2D',
                    'test_compute_checkerboard2D',
+                   'test_checkerboard3D',
                    ]
     funcs = [globals()[item] for item in funcs_names]
     if len(sys.argv) != 2:
-        print("Usage: >> python {} <{}-{}>".format(sys.argv[0], 0,
-                                                   len(funcs_names) - 1))
+        print('Usage: >> python {} <test_type ({}-{})>'.
+              format(sys.argv[0], 0, len(funcs_names) - 1))
+        for i, test in enumerate(funcs_names):
+            _, funcs_name = test.split('_', 1)
+            print("test type = {:d}: {}".format(i, funcs_name + '()'))
         sys.exit(1)
     n = int(sys.argv[1])
     assert(0 <= n < len(funcs_names))

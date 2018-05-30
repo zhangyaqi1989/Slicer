@@ -285,3 +285,51 @@ def _make_checkerboard2D(ox, oy, length, width, road_width, contour_air_gap,
                                      angle)
             checker_lst.append(checker)
     return checker_lst
+
+
+def compute_checkerboard3D(ox, oy, oz, length, width, height, road_width,
+                           layer_height, contour_air_gap_lst, raster_air_gap_lst, num_contours_lst,
+                           contour_start_locs_lsts, raster_start_loc_lsts, angle_lsts, grid_length,
+                           grid_width):
+    """ create checkerboard3D checker_lst
+    """
+    num_layers = int(height // layer_height)
+    hs = np.linspace(oz + 0.5 * layer_height, oz + 0.5 * layer_height +
+                     (num_layers - 1) * layer_height, num_layers)
+    points_lst = []
+    for i in range(num_layers):
+        z = hs[i]
+        contour_start_locs_lst = contour_start_locs_lsts[i]
+        raster_start_loc_lst = raster_start_loc_lsts[i]
+        angle_lst = angle_lsts[i]
+        contour_air_gap = contour_air_gap_lst[i]
+        raster_air_gap = raster_air_gap_lst[i]
+        num_contours = num_contours_lst[i]
+        temp_checker_lst = compute_checkerboard2D(ox, oy, length, width,
+                                                  road_width, contour_air_gap, raster_air_gap,
+                                                  num_contours, contour_start_locs_lst,
+                                                  raster_start_loc_lst, angle_lst, grid_length, grid_width)
+        temp_points_lst = _insertZ(temp_checker_lst, z)
+        points_lst.extend(temp_points_lst)
+    return points_lst
+
+
+def _insertZ(checker_lst, z):
+    """ insert z value to checker_lst
+        return (xs, ys, zs)
+    """
+    # xs = []
+    # ys = []
+    points_lst = []
+    for checker in checker_lst:
+        for points in checker:
+            tempxs, tempys = points
+            # xs.extend(tempxs)
+            # ys.extend(tempys)
+            points = (tempxs, tempys, [z] * len(tempxs))
+            points_lst.append(points)
+
+    # n = len(xs)
+    # zs = [z]*n
+    # return (xs, ys, zs)
+    return points_lst

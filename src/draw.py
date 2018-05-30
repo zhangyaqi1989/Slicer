@@ -86,5 +86,58 @@ def plot_checkerboard2D(checker_lst, ox, oy, length, width, grid_length,
                       grid_width, colors, plot_border=True, ax=ax)
 
 
+def plot_gcode_roads3D(road_lst):
+    """
+    plot road list read from Gcode file
+
+    Args:
+        roads: road list
+
+    Returns:
+        None
+    """
+    n = len(road_lst)
+    print("Number of roads: " + str(n))
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    road = (0, 0, 0, 0, 0, 0)
+    xs = []
+    ys = []
+    zs = []
+    k = 0.1
+    segs = -1
+    tmp = []
+    for i in range(n):
+        if i > k * n:
+            print(str(int(100 * k)) + "%")
+            k += 0.1
+        old_road = road
+        road = road_lst[i]
+        if road[0] != old_road[2] or road[1] != old_road[3] or road[4] != old_road[4]:
+            segs += 1
+            if len(xs) >= 1:
+                xs.append(old_road[2])
+                ys.append(old_road[3])
+                zs.append(old_road[4])
+                ax.plot(xs, ys, zs)
+                ax.scatter(xs[0], ys[0], zs[0])
+                plt.draw()
+            xs = [road[0]]
+            ys = [road[1]]
+            zs = [road[4]]
+        else:
+            xs.append(road[0])
+            ys.append(road[1])
+            zs.append(road[4])
+    if len(xs) != 0:
+        xs.append(road[2])
+        ys.append(road[3])
+        zs.append(road[4])
+        ax.plot(xs, ys, zs)
+        ax.scatter(xs[0], ys[0], zs[0])
+        plt.draw()
+    print("100%")
+
+
 if __name__ == "__main__":
     print("Hello World")
