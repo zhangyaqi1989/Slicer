@@ -15,41 +15,6 @@ import sys
 
 # 3rd party library
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
-
-def plot_path(path_lst, ox, oy, length, width, colors, plot_border=True,
-              ax=False):
-    """
-    plot list of subpaths and rectangle border is defined by length X width
-    The left bottom corner of the border is @ (ox, oy)
-
-    Args:
-        path_lst: [path1, path2, ...], path = (xs, ys)
-        ox, oy: left bottom corner of the border
-        length: length of border
-        width: width of border
-        colors: colors of each subpath
-        plot_border: plot border or not
-        ax: axes object
-
-    Returns:
-        ax: an axes object
-    """
-    # 0. create axes
-    if not ax:
-        fig, ax = plt.subplots(figsize=(8, 8))
-    # 1. plot rectangle border
-    if plot_border:
-        xs, ys = compute_rectangle_border(ox, oy, length, width)
-        plt.plot(xs, ys, 'k-')
-    # 2. plot path defined by path_lst
-    assert(len(path_lst) == len(colors))
-    for path, color in zip(path_lst, colors):
-        plt.scatter(path[0][0], path[1][0])
-        plt.plot(path[0], path[1], color)
-    return ax
 
 
 def compute_rectangle_border(ox, oy, length, width, start_loc="LL"):
@@ -82,7 +47,7 @@ def compute_rectangle_border(ox, oy, length, width, start_loc="LL"):
 def compute_raster_path2D(ox, oy, length, width, road_width, air_gap, angle,
                           start_loc='LL'):
     """
-    create 2D path of 90 degree or 0 degree raster
+    create 2D raster path of 90 degree or 0 degree on a rectangle layer
 
     Args:
         ox, oy: left bottom corner of the border
@@ -150,3 +115,173 @@ def compute_raster_path2D(ox, oy, length, width, road_width, air_gap, angle,
     xs = [x + ox for x in xs]
     ys = [y + oy for y in ys]
     return [(xs, ys)]
+
+
+def compute_contour_path2D(ox, oy, length, width, road_width, air_gap,
+                           num_contours, start_locs):
+    """
+    compute 2D contour path of a rectangle layer
+
+    Args:
+        ox, oy: left bottom corner of the border
+        length: length of border
+        width: width of border
+        road_width: width of the road
+        air_gap: air gap between adjacent contours
+        num_contours: number of contours
+        start_locs: defines start position of each countour
+                    each start_loc is in [LL, LR, UR, UL]
+
+    Returns:
+        contour list
+    """
+    assert(len(start_locs) == num_contours)
+    contour_lst = []
+    curr_x = ox + 0.5 * road_width
+    curr_y = oy + 0.5 * road_width
+    curr_length = length - road_width
+    curr_width = width - road_width
+    gap = road_width + air_gap
+    for i in range(num_contours):
+        start_loc = start_locs[i]
+        contour = compute_rectangle_border(curr_x, curr_y, curr_length,
+                                           curr_width, start_loc)
+        contour_lst.append(contour)
+        # update curr_x, curr_y, curr_length and curr_width
+        curr_x += gap
+        curr_y += gap
+        assert(curr_length >= 2 * gap)
+        assert(curr_width >= 2 * gap)
+        curr_length -= 2 * gap
+        curr_width -= 2 * gap
+    return contour_lst
+
+
+def compute_path2D(ox, oy, length, width, road_width, contour_air_gap,
+                   raster_air_gap, num_contours, contour_start_locs,
+                   raster_start_loc, angle):
+    """
+    create 2D contour + raster path of rectangle layer
+
+    Args:
+        ox, oy: left bottom corner of the border
+        length: length of border
+        width: width of border
+        road_width: width of the road
+        contour_air_gap: air gap between adjacent contours
+        raster_air_gap: air gap between adjacent roads
+        num_contours: number of contours
+        contour_start_locs: defines start position of each contour
+                    each start_loc is in [LL, LR, UR, UL]
+        raster_start_loc: LL, LR, UR, UL
+        angle: raster angle (only support 0 and 90)
+
+    Returns:
+        path list
+    """
+    path_lst = compute_contour_path2D(ox, oy, length, width, road_width,
+                                      contour_air_gap, num_contours, contour_start_locs)
+    gap = road_width + contour_air_gap
+    # this update is questionable
+    raster_ox = ox + 0.5 * road_width + num_contours * gap
+    raster_oy = oy + 0.5 * road_width + num_contours * gap
+    raster_length = length - road_width - num_contours * 2 * gap
+    raster_width = width - road_width - num_contours * 2 * gap
+    path_lst.extend(compute_raster_path2D(raster_ox, raster_oy, raster_length,
+                                          raster_width, road_width, raster_air_gap, angle, raster_start_loc))
+    return path_lst
+
+
+def _rand_start_locs(n):
+    """
+    generate start_locs randomly
+
+    Args:
+        n: number of start_locs
+
+    Returns:
+        randomly picked start_locs
+    """
+    return np.random.choice(['LL', 'LR', 'UL', 'UR'], n, replace=True)
+
+
+def compute_checkerboard2D(ox, oy, grid_length, grid_width, nrows, ncols,
+                           num_contours, road_width, contour_air_gap, raster_air_gap):
+    """
+    compute 2D checkerboard path (contour + raster) of a rectangle layer
+
+    Args:
+        ox, oy: left bottom corner of the border
+        grid_length: length of grid
+        grid_width: width of grid
+        nrows: number of cells in row
+        ncols: number of cells in column
+        num_contours: number of contours
+        road_width: width of the road
+        contour_air_gap: air gap between adjacent contours
+        raster_air_gap: air gap between adjacent roads
+
+    Returns:
+        path list
+    """
+    num_checkers = nrows * ncols
+    length = grid_length * ncols
+    width = grid_width * nrows
+    # # fixed value
+    # raster_start_loc_lst = ['LR']*num_checkers
+    # contour_start_locs = ['LL']*num_contours
+    # angle_lst = [0]*num_checkers
+    # # random pick
+    raster_start_loc_lst = _rand_start_locs(num_checkers)
+    contour_start_locs_lst = []
+    angle_lst = np.random.choice([0, 90], num_checkers, replace=True)
+    for i in range(num_checkers):
+        contour_start_locs_lst.append(_rand_start_locs(num_contours))
+    checker_lst = _make_checkerboard2D(ox, oy, length, width, road_width,
+                                       contour_air_gap, raster_air_gap,
+                                       num_contours, contour_start_locs_lst, raster_start_loc_lst,
+                                       angle_lst, grid_length, grid_width)
+    return checker_lst
+
+
+def _make_checkerboard2D(ox, oy, length, width, road_width, contour_air_gap,
+                         raster_air_gap, num_contours, contour_start_locs_lst,
+                         raster_start_loc_lst, angle_lst, grid_length, grid_width):
+    """
+    make 2D checkerboard path (contour + raster) of a rectangle layer
+
+    Args:
+        ox, oy: left bottom corner of the border
+        length: length of border
+        width: width of border
+        road_width: width of the road
+        contour_air_gap: air gap between adjacent contours
+        raster_air_gap: air gap between adjacent roads
+        num_contours: number of contours
+        contour_start_locs_lst: defines start position of each contour
+                    each start_loc is in [LL, LR, UR, UL]
+        raster_start_loc_lst: LL, LR, UR, UL
+        angle_lst: raster angle (only support 0 and 90)
+        grid_length: length of grid
+        grid_width: width of grid
+
+    Returns:
+        path list
+    """
+    ncols = length // grid_length
+    nrows = width // grid_width
+    checker_lst = []
+    for row in range(nrows):
+        for col in range(ncols):
+            idx = row * ncols + col
+            raster_start_loc = raster_start_loc_lst[idx]
+            angle = angle_lst[idx]
+            contour_start_locs = contour_start_locs_lst[idx]
+            curr_x = ox + grid_length * col
+            curr_y = oy + grid_width * row
+            checker = compute_path2D(curr_x, curr_y, grid_length, grid_width,
+                                     road_width, contour_air_gap, raster_air_gap,
+                                     num_contours, contour_start_locs, raster_start_loc,
+                                     angle)
+            checker_lst.append(checker)
+    return checker_lst

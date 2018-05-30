@@ -503,6 +503,7 @@ def test_contour_path2D():
 
 
 def test_path2D():
+    """Test compute_path2D()"""
     ox = 1
     oy = 2
     length = 30
