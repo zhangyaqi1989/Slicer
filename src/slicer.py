@@ -291,7 +291,8 @@ def compute_checkerboard3D(ox, oy, oz, length, width, height, road_width,
                            layer_height, contour_air_gap_lst, raster_air_gap_lst, num_contours_lst,
                            contour_start_locs_lsts, raster_start_loc_lsts, angle_lsts, grid_length,
                            grid_width):
-    """ create checkerboard3D checker_lst
+    """
+    compute_checkerboard3D()
     """
     num_layers = int(height // layer_height)
     hs = np.linspace(oz + 0.5 * layer_height, oz + 0.5 * layer_height +
@@ -305,10 +306,10 @@ def compute_checkerboard3D(ox, oy, oz, length, width, height, road_width,
         contour_air_gap = contour_air_gap_lst[i]
         raster_air_gap = raster_air_gap_lst[i]
         num_contours = num_contours_lst[i]
-        temp_checker_lst = compute_checkerboard2D(ox, oy, length, width,
-                                                  road_width, contour_air_gap, raster_air_gap,
-                                                  num_contours, contour_start_locs_lst,
-                                                  raster_start_loc_lst, angle_lst, grid_length, grid_width)
+        temp_checker_lst = _make_checkerboard2D(ox, oy, length, width,
+                                                road_width, contour_air_gap, raster_air_gap,
+                                                num_contours, contour_start_locs_lst,
+                                                raster_start_loc_lst, angle_lst, grid_length, grid_width)
         temp_points_lst = _insertZ(temp_checker_lst, z)
         points_lst.extend(temp_points_lst)
     return points_lst

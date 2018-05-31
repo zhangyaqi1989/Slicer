@@ -19,7 +19,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # local library
 from slicer import (compute_raster_path2D, compute_contour_path2D,
-                    compute_path2D, compute_checkerboard2D, _insertZ
+                    compute_path2D, compute_checkerboard2D, _insertZ,
+                    _rand_start_locs, compute_checkerboard3D,
                     )
 
 from draw import plot_path, plot_checkerboard2D, plot_gcode_roads3D
@@ -138,6 +139,51 @@ def test_checkerboard3D():
     plt.show()
 
 
+def test_checkerboard3D_multlayers():
+    """Test compute_checkerboard3D()"""
+    ox = 1
+    oy = 2
+    oz = 10
+    grid_length = 30
+    grid_width = 20
+    nrows = 3
+    ncols = 4
+    road_width = 1
+    layer_height = 2
+    height = 4
+    num_layers = height // layer_height
+    num_checkers = nrows * ncols
+    num_contours = 3
+    contour_air_gap_lst = [0] * num_layers
+    raster_air_gap_lst = [0] * num_layers
+    num_contours_lst = [3] * num_layers
+    length = ncols * grid_length
+    width = nrows * grid_width
+    raster_start_loc_lsts = []
+    for i in range(num_layers):
+        raster_start_loc_lst = _rand_start_locs(num_checkers)
+        raster_start_loc_lsts.append(raster_start_loc_lst)
+    contour_start_locs_lsts = []
+    for i in range(num_layers):
+        contour_start_locs_lst = []
+        for i in range(num_checkers):
+            contour_start_locs_lst.append(_rand_start_locs(num_contours))
+        contour_start_locs_lsts.append(contour_start_locs_lst)
+    angle_lsts = []
+    for i in range(num_layers):
+        angle_lst = np.random.choice([0, 90], num_checkers, replace=True)
+        angle_lsts.append(angle_lst)
+    points_lst = compute_checkerboard3D(ox, oy, oz, length, width, height, road_width,
+                                        layer_height, contour_air_gap_lst, raster_air_gap_lst, num_contours_lst,
+                                        contour_start_locs_lsts, raster_start_loc_lsts, angle_lsts, grid_length,
+                                        grid_width)
+    filename = 'test.gcode'
+    write_gcode(points_lst, filename)
+    roads = read_gcode(filename, 10)
+    plot_gcode_roads3D(roads)
+    plt.show()
+
+
 def main():
     """command line runner"""
     # funcs_names = [item for item in dir() if item.startswith('test_')]
@@ -146,6 +192,7 @@ def main():
                    'test_compute_path2D',
                    'test_compute_checkerboard2D',
                    'test_checkerboard3D',
+                   'test_checkerboard3D_multlayers',
                    ]
     funcs = [globals()[item] for item in funcs_names]
     if len(sys.argv) != 2:
