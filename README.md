@@ -1,8 +1,15 @@
 # Slicer
-Generate G-code for simple path plan.
+Generate G-code for simple path plan. This project is a subproject of Thermal Simulation Test Platform.
 
-![Contour and raster](https://github.com/zhangyaqi1989/Slicer/blob/master/images/multi_contours_raster.png)
+* 1. Contour and raster path
 
-![checker board](https://github.com/zhangyaqi1989/Slicer/blob/master/images/check_board.png)
+Boundary is denoted by black lines; contours are shown in red; raster is shown in blue. Dot denotes the start point of a subpath.
+![Contour and raster](./images/multi_contours_raster.png)
 
-![multiple layer](https://github.com/zhangyaqi1989/Slicer/blob/master/images/multilayer_check_board.png)
+* 2. Checkerboard in 2D
+
+Raster path in each cell has random orientation.
+![checker board](./images/check_board.png)
+
+* 3. Checkerboard pattern in multiple layers
+![multiple layer](./images/multilayer_check_board.png)

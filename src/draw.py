@@ -13,9 +13,13 @@ This module defines some plot functions
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
 
 # local library
 from slicer import compute_rectangle_border
+
+# use seaborn plot style
+sns.set()
 
 
 def plot_path(path_lst, ox, oy, length, width, colors, plot_border=True,

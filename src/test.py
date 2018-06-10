@@ -146,8 +146,8 @@ def test_checkerboard3D_multlayers():
     oz = 10
     grid_length = 30
     grid_width = 20
-    nrows = 3
-    ncols = 4
+    nrows = 2
+    ncols = 2
     road_width = 1
     layer_height = 2
     height = 4
@@ -184,7 +184,7 @@ def test_checkerboard3D_multlayers():
     plt.show()
 
 
-def main():
+def command_line_runner():
     """command line runner"""
     # funcs_names = [item for item in dir() if item.startswith('test_')]
     funcs_names = ['test_compute_raster_path2D',
@@ -202,10 +202,10 @@ def main():
             _, funcs_name = test.split('_', 1)
             print("test type = {:d}: {}".format(i, funcs_name + '()'))
         sys.exit(1)
-    n = int(sys.argv[1])
-    assert(0 <= n < len(funcs_names))
-    funcs[n]()
+    test_type = int(sys.argv[1])
+    assert(0 <= test_type < len(funcs_names))
+    funcs[test_type]()
 
 
 if __name__ == "__main__":
-    main()
+    command_line_runner()
